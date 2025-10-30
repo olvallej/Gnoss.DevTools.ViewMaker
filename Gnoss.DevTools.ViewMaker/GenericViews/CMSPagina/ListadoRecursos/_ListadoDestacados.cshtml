@@ -1,0 +1,20 @@
+﻿@model CMSComponentResourceList
+
+@if (Model != null && Model.ResourceList.Count>0)
+{
+    <div class="componenteRecursosDestacados bg-light">
+        <div class="resource-list gridView">
+            <div class="group-title">
+                <h2>@Model.Title</h2>
+            </div>
+            <div class="row g-4">
+                @foreach (var fichaModel in Model.ResourceList)
+                {
+                    <div class="col-12 col-md-6">
+                        @Html.PartialView(Model.ViewNameResources, fichaModel)
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}

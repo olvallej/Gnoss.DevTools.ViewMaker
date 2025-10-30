@@ -1,0 +1,289 @@
+﻿@using Es.Riam.Gnoss.Web.MVC.Models;
+@model CMSComponentQuerySPARQL
+
+
+
+<style>
+    /* Card general */
+    .dlc-card {
+        border: 0;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(6, 6, 20, 0.12);
+        transition: transform .28s cubic-bezier(.2,.9,.3,1), box-shadow .28s;
+        background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,250,255,0.96));
+        transform-origin: center;
+    }
+
+        .dlc-card:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 18px 50px rgba(6, 6, 20, 0.18);
+        }
+
+    /* Imagen */
+    .dlc-img {
+        width: 100%;
+        height: 220px;
+        object-fit: cover;
+        display: block;
+        transition: transform .45s cubic-bezier(.2,.9,.3,1), filter .45s;
+        will-change: transform;
+    }
+
+    .dlc-img-wrap {
+        overflow: hidden;
+        position: relative;
+    }
+
+        .dlc-img-wrap::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0.0), rgba(0,0,0,0.18));
+            opacity: 0;
+            transition: opacity .3s;
+        }
+
+    .dlc-card:hover .dlc-img {
+        transform: scale(1.06) rotate(-0.5deg);
+        filter: saturate(1.05);
+    }
+
+    .dlc-card:hover .dlc-img-wrap::after {
+        opacity: 1;
+    }
+
+    /* Content */
+    .dlc-body {
+        padding: 1.1rem 1.25rem;
+    }
+
+    .dlc-title {
+        font-weight: 700;
+        font-size: 1.05rem;
+        margin-bottom: .25rem;
+        color: #1b2430;
+    }
+
+    .dlc-subtitle {
+        font-size: .9rem;
+        color: #5b6774;
+        margin-bottom: .6rem;
+    }
+
+    .dlc-id {
+        font-family: monospace;
+        font-size: .82rem;
+        letter-spacing: .6px;
+    }
+
+    .badge-dlc {
+        background: linear-gradient(90deg,#ffb86b,#ff7b7b);
+        color: #fff;
+        border-radius: .65rem;
+        padding: .35rem .6rem;
+        font-weight: 600;
+        box-shadow: 0 6px 18px rgba(255,123,123,0.12);
+    }
+
+    /* Small meta row */
+   
+
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(18px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .fadeInUp {
+        animation: fadeInUp .6s cubic-bezier(.2,.9,.3,1) both;
+    }
+
+    .dlc-desc {
+        max-height: 3.9rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    .placeholder {
+        background: linear-gradient(135deg,#eceef3,#f7f9fc);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #98a1ae;
+        height: 220px;
+        font-weight: 600;
+    }
+
+    @@-webkit-keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(18px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+</style>
+
+@if (Model != null && Model.DataSetResult != null && Model.DataSetResult.Tables.Count > 0)
+{
+    <div class="container py-4">
+        <div class="row g-4">
+            @foreach (System.Data.DataRow fila in Model.DataSetResult.Tables[0].Rows)
+            {
+                // variables por fila
+                var imagen = "";
+                var nombreDlc = "";
+                var nombreVideojuego = "";
+                var identificador = "";
+                var descripcion = "";
+
+                // recorrer columnas y mapear heurísticamente
+                for (int i = 0; i < Model.DataSetResult.Tables[0].Columns.Count; i++)
+                {
+                    string NombreColumna = Model.DataSetResult.Tables[0].Columns[i].ColumnName ?? "";
+                    string ValorColumna = fila[i]?.ToString() ?? "";
+
+                    var colLower = NombreColumna.ToLowerInvariant();
+
+                    if (colLower.Contains("imagen") || colLower.Contains("image") || colLower.Contains("img"))
+                    {
+                        imagen = ValorColumna;
+                        continue;
+                    }
+
+                    if (colLower.Contains("identifier") || colLower.Equals("id") || colLower.Contains("identificador"))
+                    {
+                        identificador = ValorColumna;
+                        continue;
+                    }
+
+                    // Preferimos diferenciar nombre del DLC y nombre del videojuego
+                    if (colLower.Contains("nombre") || colLower.Contains("name") || colLower.Contains("title") || colLower.Contains("titulo"))
+                    {
+                        // si nombreVideojuego está vacío, intentamos asignarlo con heurística
+                        // si ya hay un nombreDlc, tratamos este como nombreVideojuego
+                        if (string.IsNullOrEmpty(nombreDlc))
+                        {
+                            nombreDlc = ValorColumna;
+                        }
+                        else if (string.IsNullOrEmpty(nombreVideojuego))
+                        {
+                            nombreVideojuego = ValorColumna;
+                        }
+                        else
+                        {
+                            // concatenar si hay más campos nombre
+                            descripcion = string.IsNullOrEmpty(descripcion) ? ValorColumna : descripcion + " / " + ValorColumna;
+                        }
+                        continue;
+                    }
+
+                    if (colLower.Contains("desc") || colLower.Contains("description") || colLower.Contains("descripcion"))
+                    {
+                        descripcion = ValorColumna;
+                        continue;
+                    }
+
+                    // valores no mapeados que pueden ser interesantes -> añadimos a descripción
+                    if (!string.IsNullOrEmpty(ValorColumna))
+                    {
+                        if (string.IsNullOrEmpty(descripcion))
+                        {
+                            descripcion = ValorColumna;
+                        }
+                        else
+                        {
+                            descripcion += " • " + ValorColumna;
+                        }
+                    }
+                }
+
+                if (string.IsNullOrEmpty(nombreVideojuego) && !string.IsNullOrEmpty(nombreDlc))
+                {
+                    
+                }
+
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="dlc-card fadeInUp">
+                        @* Imagen o placeholder *@
+                        @if (!string.IsNullOrEmpty(imagen))
+                        {
+                            <div class="dlc-img-wrap">
+                                <img src="@imagen" alt="@nombreDlc" class="dlc-img" loading="lazy" />
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="placeholder">
+                                <div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-controller" viewBox="0 0 16 16" style="opacity:.7">
+                                        <path d="M11.5 2a.5.5 0 0 1 .5.5V4h1a1 1 0 0 1 1 1v1h-1.5a.5.5 0 0 0-.5.5v1H4v-1a.5.5 0 0 0-.5-.5H2V5a1 1 0 0 1 1-1h1V2.5A.5.5 0 0 1 4.5 2h7z" />
+                                        <path d="M2 8v3a2 2 0 0 0 2 2h1.5a1.5 1.5 0 0 0 0-3H4v-2H2z" />
+                                    </svg>
+                                    <div style="font-size:.95rem; margin-top:.6rem;">No image available</div>
+                                </div>
+                            </div>
+                        }
+
+                        <div class="dlc-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="dlc-title">@(!string.IsNullOrEmpty(nombreDlc) ? nombreDlc : "Untitled DLC")</div>
+                                    @if (!string.IsNullOrEmpty(nombreVideojuego))
+                                    {
+                                        <div class="dlc-subtitle">Juego: <strong>@nombreVideojuego</strong></div>
+                                    }
+                                    else
+                                    {
+                                        <div class="dlc-subtitle text-muted">Contenido adicional</div>
+                                    }
+                                </div>
+
+                                <div class="text-end">
+                                    @if (!string.IsNullOrEmpty(identificador))
+                                    {
+                                        <div class="badge-dlc dlc-id">@identificador</div>
+                                    }
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(descripcion))
+                            {
+                                <p class="mt-2 dlc-desc">@descripcion</p>
+                            }
+                            else
+                            {
+                                <p class="mt-2 dlc-desc text-muted"></p>
+                            }
+
+                            <div class="meta-row">
+                                <a class="btn btn-outline-primary btn-sm btn-dlc" href="#" role="button">Ver detalles</a>
+                                <small class="text-muted ms-auto">Última actualización: <strong>@DateTime.Now.ToString("yyyy-MM-dd")</strong></small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <div class="container py-5">
+        <div class="alert alert-info">No hay resultados para mostrar.</div>
+    </div>
+}

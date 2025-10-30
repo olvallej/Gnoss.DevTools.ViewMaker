@@ -1,0 +1,104 @@
+﻿@using Es.Riam.Util;
+@model ResourceModel
+
+@if (Model != null)
+{       
+    <div class="resource">
+        <div class="box description">
+            @if (!string.IsNullOrEmpty(Model.UrlPreview))
+            {
+                <div class="group miniaturaListado">
+                    <p class="miniatura">
+                        <a href="@Model.CompletCardLink">
+                            <img width="240px" title="@Model.Title" alt="@Model.Title" src="@Model.UrlPreview"></a>
+                    </p>
+                </div>
+            }
+            <div class="wrapDescription">
+                <div class="group title">
+                    <h2>
+                        <a href="@Model.CompletCardLink">@Model.Title</a>
+                    </h2>
+                    @{
+            string privado = "";
+            if (Model.Private)
+            {
+                privado = " privado";
+            }
+                    }
+
+                    <p class="resourceType @(Model.TypeDocument == ResourceModel.DocumentType.Semantico?"semantico " + Model.RdfType:Model.NameImage) @privado">
+                        <span>tipo de documento</span>
+                        @if (Model.Private)
+                        {
+                            <span class="privado">documento privado</span>
+                        }
+                        <a href="@Model.CompletCardLink">@Model.NameImage</a>
+                    </p>
+                </div>
+                <div class="group content">
+
+                    @{
+                        string claseExtraDescripcion = "";
+                        if ((Model.ViewSettings != null && ((!Model.MapView && (Model.ViewSettings.ListView.ShowDescription || Model.ViewSettings.MosaicView.ShowDescription)) || (Model.MapView && Model.ViewSettings.MapView.ShowDescription))))
+                        {
+                            if (Model.ViewSettings != null)
+                            {
+                                if (!Model.ViewSettings.ListView.ShowDescription)
+                                {
+                                    claseExtraDescripcion += " noListView";
+                                }
+                                if (!Model.ViewSettings.MosaicView.ShowDescription)
+                                {
+                                    claseExtraDescripcion += " noGridView";
+                                }
+                            }
+                        }
+                    }
+
+                    <div class="descripcionResumida @claseExtraDescripcion">                        
+                        @if (Model.ViewSettings == null || (!Model.MapView && (Model.ViewSettings.ListView.ShowDescription || Model.ViewSettings.MosaicView.ShowDescription)) || (Model.MapView && Model.ViewSettings.MapView.ShowDescription))
+                        {
+                            if ((Model.Description.Contains("<p ") || Model.Description.Contains("<p>")) && Model.Description.Contains("</p>"))
+                            {
+                            @Html.Raw(Model.Description)
+                            }
+                            else
+                            {
+                            <p>
+                                @Html.Raw(Model.Description)
+                            </p>
+                            }
+                        }
+                    </div>
+                    <div class="verMasRecurso">
+                        <p>
+                            <a href="@Model.CompletCardLink">...</a>
+                        </p>
+                    </div>
+                    @if (Model.ViewSettings != null)
+                    {
+                        if (!Model.MapView && !string.IsNullOrEmpty(Model.ViewSettings.ListView.InfoExtra))
+                        {
+                        <div class="listado">
+                            @Html.Raw(Model.ViewSettings.ListView.InfoExtra)
+                        </div>   
+                        }
+                        if (!Model.MapView && !string.IsNullOrEmpty(Model.ViewSettings.MosaicView.InfoExtra))
+                        {
+                        <div class="mosaico">
+                            @Html.Raw(Model.ViewSettings.MosaicView.InfoExtra)
+                        </div>   
+                        }
+                        if (Model.MapView && !string.IsNullOrEmpty(Model.ViewSettings.MapView.InfoExtra))
+                        {
+                        <div class="mapa">
+                            @Html.Raw(Model.ViewSettings.MapView.InfoExtra)
+                        </div>   
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>    
+}
